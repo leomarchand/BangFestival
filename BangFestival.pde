@@ -5,11 +5,14 @@ import netP5.*;
 
 int movieHeight;
 int movieWidth;
-int movieAlpha;
-int alphaDelta;
-int movieR;
-int movieG;
-int movieB;
+
+int screenAlpha;
+int screenAlphaDelta;
+int liamAlpha;
+int liamAlphaDelta;
+int sunnyAlpha;
+int sunnyAlphaDelta;
+
 int[] liamRGB;
 int[] sunnyRGB;
 
@@ -86,16 +89,18 @@ Movie movie65;
 
 
 Movie[] movies;
-int topLeftMovieIndex;
-int topRightMovieIndex;
-int botLeftMovieIndex;
-int botRightMovieIndex;
+int leftMovieIndex;
+int rightMovieIndex;
 
 void setup() {
   size(displayWidth, displayHeight, P2D);
   bg = loadImage("000.black.jpg");
-  movieAlpha = 0;
-  alphaDelta = 10;
+  screenAlpha = 0;
+  screenAlphaDelta = 10;
+  liamAlpha = 0;
+  liamAlphaDelta = -10;
+  sunnyAlpha = 0;
+  sunnyAlphaDelta = -10;
   
   liamRGB = new int[] {255, 255, 255};
   sunnyRGB = new int[] {255, 255, 255};
@@ -103,8 +108,9 @@ void setup() {
   oscP5 = new OscP5(this,5001);
   myRemoteLocation = new NetAddress("127.0.0.1",5001);
 
-  movieHeight = displayHeight/2;
-  movieWidth = movieHeight*4/3;
+  movieWidth = displayWidth/2;
+  movieHeight = movieWidth*3/4;
+
   
   movie0 = new Movie(this, "bang.mov");
   movie1 = new Movie(this, "bang1.mov");
@@ -180,54 +186,59 @@ void setup() {
                          movie48, movie49, movie50, movie51, movie52, movie53, movie54, movie55, movie56, movie57, movie58, movie59,
                          movie60, movie61, movie62, movie63, movie64, movie65 };
                          
-  topLeftMovieIndex = 0;
-  topRightMovieIndex = movies.length/4;
-  botLeftMovieIndex = movies.length/2;
-  botRightMovieIndex = movies.length*3/4;
-
+  leftMovieIndex = 0;
+  rightMovieIndex = movies.length/2;
   
-  movies[topLeftMovieIndex].loop();
-  movies[topRightMovieIndex].loop();
-  movies[botLeftMovieIndex].loop();
-  movies[botRightMovieIndex].loop();
+  movies[leftMovieIndex].loop();
+  movies[rightMovieIndex].loop();
+
 }
 
 void draw() {
   noCursor();
   image(bg, 0, 0, displayWidth, displayHeight);
   
-  tint(liamRGB[0],liamRGB[1],liamRGB[2],255);
-  image(movies[topLeftMovieIndex], 0, 0, movieWidth, movieHeight);
-  image(movies[topRightMovieIndex], movieWidth, 0, movieWidth, movieHeight);
   tint(sunnyRGB[0],sunnyRGB[1],sunnyRGB[2],255);
-  image(movies[botLeftMovieIndex], 0, movieHeight, movieWidth, movieHeight);
-  image(movies[botRightMovieIndex], movieWidth, movieHeight, movieWidth, movieHeight);
-  tint(255, movieAlpha);
+  image(movies[leftMovieIndex], 0, displayHeight/2-movieHeight/2, movieWidth, movieHeight);
+  tint(255, sunnyAlpha);
+  image(bg, 0, displayHeight/2-movieHeight/2, movieWidth, movieHeight);
+  tint(liamRGB[0],liamRGB[1],liamRGB[2],255);
+  image(movies[rightMovieIndex], movieWidth, displayHeight/2-movieHeight/2, movieWidth, movieHeight);
+  tint(255, liamAlpha);
+  image(bg, movieWidth, displayHeight/2-movieHeight/2, movieWidth, movieHeight);
+  tint(255, screenAlpha);
   image(bg, 0, 0, displayWidth, displayHeight);
-  if (movieAlpha > 0 ) {
-      System.out.println("first if");
-    movieAlpha += alphaDelta;
+  if (screenAlpha > 0 ) {
+    screenAlpha += screenAlphaDelta;
     
-    if (movieAlpha > 300) {
-      System.out.println("second if");
-      alphaDelta = -1*alphaDelta;
-      movies[topLeftMovieIndex].stop();
-      movies[topRightMovieIndex].stop();
-      movies[botLeftMovieIndex].stop();
-      movies[botRightMovieIndex].stop();
+    if (screenAlpha > 300) {
+      screenAlphaDelta = -1*screenAlphaDelta;
+      movies[leftMovieIndex].stop();
+      movies[rightMovieIndex].stop();
       
-      topLeftMovieIndex = (topLeftMovieIndex + 1) % movies.length;
-      topRightMovieIndex = (topRightMovieIndex + 1) % movies.length;
-      botLeftMovieIndex = (botLeftMovieIndex + 1) % movies.length;
-      botRightMovieIndex = (botRightMovieIndex + 1) % movies.length;
+      leftMovieIndex = (leftMovieIndex + 1) % movies.length;
+      rightMovieIndex = (rightMovieIndex + 1) % movies.length;
+
       
-      movies[topLeftMovieIndex].loop();
-      movies[topRightMovieIndex].loop();
-      movies[botLeftMovieIndex].loop();
-      movies[botRightMovieIndex].loop(); 
+      movies[leftMovieIndex].loop();
+      movies[rightMovieIndex].loop();
     } 
   } else {
-      movieAlpha = 0;
+      screenAlpha = 0;
+  }
+  if (liamAlpha <= 0) {
+    liamAlpha = 0;
+  } else if (liamAlpha >=255) {
+    liamAlpha = 255;
+  } else {
+    liamAlpha += liamAlphaDelta;
+  }
+  if (sunnyAlpha <= 0) {
+    sunnyAlpha = 0;
+  } else if (sunnyAlpha >=255) {
+    sunnyAlpha = 255;
+  } else {
+    sunnyAlpha += sunnyAlphaDelta;
   }
 
 }
@@ -239,9 +250,16 @@ void movieEvent(Movie m) {
 void keyPressed() {
   switch (key) {
     case 32:
-      movieAlpha = 5;
-      alphaDelta = Math.abs(alphaDelta);
-        System.out.println("spacebar");
+      screenAlpha = 5;
+      screenAlphaDelta = Math.abs(screenAlphaDelta);
+      break;
+    case 108:
+      liamAlphaDelta *= -1;
+      liamAlpha += liamAlphaDelta;
+      break;
+    case 115:
+      sunnyAlphaDelta *= -1;
+      sunnyAlpha += sunnyAlphaDelta;
       break;
     default:
       break;
@@ -267,7 +285,9 @@ void oscEvent(OscMessage theOscMessage) {
 }
 
 int[] ampToRGB(float amp) {
-  if( amp < 0.6 ) {
+  if ( amp < 0.1 ) {
+      return new int[ ] { 255, 255, 255 };
+  } else if ( amp < 0.6 ) {
     return new int[] { floor(255*0.5), floor(255*(amp/0.6*.3 +.5)), floor(255*0.5) };  
   } else if ( amp < 0.8 ) {
     return new int[] { floor(255*((amp - 0.6)/0.2*.3 + 0.5)), floor(255*0.8), floor(255*0.5) };
